@@ -32,6 +32,7 @@ from .log_processor import LogProcessor
 from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop
 from .priority import Priority, get_priority
 from .utils import _get_batch_size
+from .internlm_dataloader import get_train_data_loader
 
 ConfigType = Union[Dict, Config, ConfigDict]
 ParamSchedulerType = Union[List[_ParamScheduler], Dict[str,
@@ -360,6 +361,25 @@ class FlexibleRunner:
             experiment_name = osp.splitext(osp.basename(self.cfg.filename))[0]
 
         self._randomness_cfg = randomness
+        ###############
+        # import torch
+        # self._train_loop = self.build_train_loop(
+        #     self._train_loop)
+        # dataloader = self._train_loop.dataloader
+        # for idx, data_batch in enumerate(dataloader):
+        #     print(data_batch)
+        # #     cu_seqlens = torch.load(f'/mnt/petrelfs/caoweihan/projects/train_internlm/saved/cnt_{idx}_cu_seqlens.pth', map_location='cpu')
+        # #     indexes = torch.load(f'/mnt/petrelfs/caoweihan/projects/train_internlm/saved/cnt_{idx}_indexes.pth', map_location='cpu')
+        # #     input_ids = torch.load(f'/mnt/petrelfs/caoweihan/projects/train_internlm/saved/cnt_{idx}_input_ids.pth', map_location='cpu')
+        # #     print(idx)
+        # #     print(torch.equal(data_batch['data']['input_ids'], input_ids))
+        # #     print(torch.equal(data_batch['data']['cumulative_len'][0], cu_seqlens[0]))
+        # #     print(torch.equal(data_batch['data']['indexes'], indexes))
+        #     breakpoint()
+        #     # break
+        # assert False
+        
+        #############
         self.strategy = self.build_strategy(
             strategy,
             launcher=launcher,
@@ -531,6 +551,9 @@ class FlexibleRunner:
     @property
     def seed(self):
         """int: A number to set random modules."""
+        # ############
+        # return 0
+        # ##############
         return self.strategy.seed
 
     @property
@@ -813,6 +836,7 @@ class FlexibleRunner:
         Returns:
             Dataloader: DataLoader build from ``dataloader_cfg``.
         """
+        return get_train_data_loader(num_worker=0)
         if isinstance(dataloader, DataLoader):
             return dataloader
 
@@ -849,8 +873,10 @@ class FlexibleRunner:
             batch_sampler = DATA_SAMPLERS.build(
                 batch_sampler_cfg,
                 default_args=dict(
-                    sampler=sampler,
-                    batch_size=dataloader_cfg.pop('batch_size')))
+                    # sampler=sampler,
+                    dataset=dataset,
+                    batch_size=dataloader_cfg.pop('batch_size')
+                ))
         else:
             # fallback to raise error in dataloader
             # if `batch_sampler_cfg` is not a valid type

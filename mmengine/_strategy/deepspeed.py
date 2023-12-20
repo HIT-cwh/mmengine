@@ -54,7 +54,8 @@ def register_deepspeed_optimizers() -> List[str]:
 
     return deepspeed_optimizers
 
-
+from collections import OrderedDict
+import torch.distributed as dist
 @OPTIM_WRAPPERS.register_module()
 class DeepSpeedOptimWrapper(BaseOptimWrapper):
 
@@ -71,6 +72,8 @@ class DeepSpeedOptimWrapper(BaseOptimWrapper):
     @model.setter
     def model(self, value):
         self._model = value
+        for name, param in self._model.named_parameters():
+            param.param_name = name
 
     def update_params(self, loss) -> None:  # type: ignore
         """Update parameters in :attr:`optimizer`."""
@@ -117,6 +120,9 @@ class MMDeepSpeedEngineWrapper:
 
     def __getattr__(self, name):
         return getattr(self.model, name)
+    
+    def __call__(self, *args, **kwargs) -> Any:
+        return self.model(*args, **kwargs)
 
     def train_step(
         self,
@@ -402,6 +408,7 @@ class DeepSpeedStrategy(BaseStrategy):
 
         wrapper = MMDeepSpeedEngineWrapper(
             model=engine, inputs_to_half=self._inputs_to_half)
+        wrapper.model.data_preprocessor.cuda()
         return wrapper
 
     def load_checkpoint(

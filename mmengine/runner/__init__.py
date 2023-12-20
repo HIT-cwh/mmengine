@@ -13,6 +13,7 @@ from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop
 from .priority import Priority, get_priority
 from .runner import Runner
 from .utils import set_random_seed
+from .internlm_dataloader import get_train_data_loader
 
 __all__ = [
     'BaseLoop', 'load_state_dict', 'get_torchvision_models',
@@ -21,5 +22,5 @@ __all__ = [
     'save_checkpoint', 'EpochBasedTrainLoop', 'IterBasedTrainLoop', 'ValLoop',
     'TestLoop', 'Runner', 'get_priority', 'Priority', 'find_latest_checkpoint',
     'autocast', 'LogProcessor', 'set_random_seed', 'FlexibleRunner',
-    'turn_on_activation_checkpointing'
+    'turn_on_activation_checkpointing', 'get_train_data_loader'
 ]
